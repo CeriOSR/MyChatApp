@@ -25,16 +25,81 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     
     @IBOutlet weak var tableView: UITableView!
     
-    @IBOutlet weak var messageTextField: UITextField!
+    //@IBOutlet weak var messageTextField: UITextField!
     
-    @IBOutlet weak var chosenUserNameLabel: UILabel!
-    
+    //@IBOutlet weak var chosenUserNameLabel: UILabel!
+    /*
     @IBAction func sendButton(_ sender: Any) {
         
         handleSend()
         messageTextField.text = ""
         
     }
+    */
+    
+    @IBOutlet weak var inputContainerView: UIView!
+
+    lazy var inputTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Enter message..."
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        textField.delegate = self
+        return textField
+    }()
+    
+    var containerViewBottomAnchor: NSLayoutConstraint?
+    
+    func setupInputComponents() {
+        /*
+        let inputContainerView = UIView()
+        inputContainerView.backgroundColor = UIColor.white
+        inputContainerView.translatesAutoresizingMaskIntoConstraints = true
+ 
+        //view.addSubview(inputContainerView)
+        
+        //x, y, w, h
+        inputContainerView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        
+        containerViewBottomAnchor = inputContainerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        containerViewBottomAnchor?.isActive = true
+        
+        inputContainerView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+        inputContainerView.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        */
+        let sendButton = UIButton(type: .system)
+        sendButton.setTitle("Send", for: .normal)
+        sendButton.translatesAutoresizingMaskIntoConstraints = false
+        sendButton.addTarget(self, action: #selector(handleSend), for: .touchUpInside)
+        
+        inputContainerView.addSubview(sendButton)
+        
+        sendButton.rightAnchor.constraint(equalTo: inputContainerView.rightAnchor).isActive = true
+        sendButton.centerYAnchor.constraint(equalTo: inputContainerView.centerYAnchor).isActive = true
+        sendButton.widthAnchor.constraint(equalToConstant: 80).isActive = true
+        sendButton.heightAnchor.constraint(equalTo: inputContainerView.heightAnchor).isActive = true
+
+        inputContainerView.addSubview(inputTextField)
+        
+        //x, y, w, h
+        self.inputTextField.leftAnchor.constraint(equalTo: inputContainerView.leftAnchor, constant: 8).isActive = true
+        self.inputTextField.centerYAnchor.constraint(equalTo: inputContainerView.centerYAnchor).isActive = true
+        self.inputTextField.rightAnchor.constraint(equalTo: sendButton.leftAnchor).isActive = true
+        self.inputTextField.heightAnchor.constraint(equalTo: inputContainerView.heightAnchor).isActive = true
+        
+        
+        let separatorLineView = UIView()
+        separatorLineView.backgroundColor = UIColor.lightGray
+        separatorLineView.translatesAutoresizingMaskIntoConstraints = false
+        
+        inputContainerView.addSubview(separatorLineView)
+        
+        separatorLineView.leftAnchor.constraint(equalTo: inputContainerView.leftAnchor).isActive = true
+        separatorLineView.topAnchor.constraint(equalTo: inputContainerView.topAnchor).isActive = true
+        separatorLineView.widthAnchor.constraint(equalTo: inputContainerView.widthAnchor).isActive = true
+        separatorLineView.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        
+    }
+    
     
     //replace with overflow menu
     @IBAction func backButton(_ sender: Any) {
@@ -48,12 +113,12 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
         
         let senderRef = FIRDatabase.database().reference().child("user_messages").child(uid!)
         let childRef = senderRef.childByAutoId()
-        let values = ["fromId": uid!, "text": messageTextField.text!, "toId": chosenUser[0], "time": FIRServerValue.timestamp()] as [String : Any]
+        let values = ["fromId": uid!, "text": inputTextField.text!, "toId": chosenUser[0], "time": FIRServerValue.timestamp()] as [String : Any]
         childRef.updateChildValues(values)
         
         let recipientRef = FIRDatabase.database().reference().child("user_messages").child(chosenUser[0])
         let recipientChildRef = recipientRef.childByAutoId()
-        let recipientValues = ["fromId": uid!, "text": messageTextField.text!, "toId": chosenUser[0], "time": FIRServerValue.timestamp()] as [String : Any]
+        let recipientValues = ["fromId": uid!, "text": inputTextField.text!, "toId": chosenUser[0], "time": FIRServerValue.timestamp()] as [String : Any]
         recipientChildRef.updateChildValues(recipientValues)
 
     
@@ -105,7 +170,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         
         handleSend()
-        messageTextField.text = ""
+        inputTextField.text = ""
         return true
         
     }
@@ -117,10 +182,35 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     
     override func viewDidAppear(_ animated: Bool) {
         
-        chosenUserNameLabel.text = chosenUser[1]
+        setupInputComponents()
+        
+        //chosenUserNameLabel.text = chosenUser[1]
 
         fetchMessages()
         
+        setupKeyBoardObservers()
+        
+    }
+    
+    func setupKeyBoardObservers() {
+    
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: .UIKeyboardWillShow, object: nil)
+    
+    }
+    
+    @IBOutlet weak var inputContainerViewBottomAnchor: NSLayoutConstraint!
+    
+    
+    func keyboardWillShow(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
+            let keyboardHeight = keyboardSize.height
+            print(keyboardHeight)
+            
+            inputContainerViewBottomAnchor?.constant = -keyboardHeight
+            
+        }
+        
+     
     }
 
     override func didReceiveMemoryWarning() {
