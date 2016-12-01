@@ -27,7 +27,8 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     
     @IBOutlet weak var messageTextField: UITextField!
     
-    //@IBOutlet weak var chosenUserNameLabel: UILabel!
+    @IBOutlet weak var chosenUserLabel: UINavigationItem!
+    
     
     @IBAction func sendButton(_ sender: Any) {
         
@@ -186,7 +187,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
         
         messageTextField.delegate = self
         
-        navigationItem.title = chosenUser[1]
+        chosenUserLabel.title = chosenUser[1]
 
         fetchMessages()
         
