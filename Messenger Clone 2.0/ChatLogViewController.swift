@@ -25,20 +25,19 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     
     @IBOutlet weak var tableView: UITableView!
     
-    //@IBOutlet weak var messageTextField: UITextField!
+    @IBOutlet weak var messageTextField: UITextField!
     
     //@IBOutlet weak var chosenUserNameLabel: UILabel!
-    /*
+    
     @IBAction func sendButton(_ sender: Any) {
         
         handleSend()
         messageTextField.text = ""
         
     }
-    */
     
-    @IBOutlet weak var inputContainerView: UIView!
-
+    //@IBOutlet weak var inputContainerView: UIView!
+/*
     lazy var inputTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Enter message..."
@@ -46,9 +45,8 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
         textField.delegate = self
         return textField
     }()
-    
-    var containerViewBottomAnchor: NSLayoutConstraint?
-    
+*/
+    /*
     func setupInputComponents() {
         /*
         let inputContainerView = UIView()
@@ -100,25 +98,26 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
         
     }
     
-    
+    */
+    /*
     //replace with overflow menu
     @IBAction func backButton(_ sender: Any) {
         
         performSegue(withIdentifier: "backToUserCollectionViewSegue", sender: self)
         
     }
-    
+    */
     
     func handleSend() {
         
         let senderRef = FIRDatabase.database().reference().child("user_messages").child(uid!)
         let childRef = senderRef.childByAutoId()
-        let values = ["fromId": uid!, "text": inputTextField.text!, "toId": chosenUser[0], "time": FIRServerValue.timestamp()] as [String : Any]
+        let values = ["fromId": uid!, "text": messageTextField.text!, "toId": chosenUser[0], "time": FIRServerValue.timestamp()] as [String : Any]
         childRef.updateChildValues(values)
         
         let recipientRef = FIRDatabase.database().reference().child("user_messages").child(chosenUser[0])
         let recipientChildRef = recipientRef.childByAutoId()
-        let recipientValues = ["fromId": uid!, "text": inputTextField.text!, "toId": chosenUser[0], "time": FIRServerValue.timestamp()] as [String : Any]
+        let recipientValues = ["fromId": uid!, "text": messageTextField.text!, "toId": chosenUser[0], "time": FIRServerValue.timestamp()] as [String : Any]
         recipientChildRef.updateChildValues(recipientValues)
 
     
@@ -166,11 +165,12 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     
     }
     
+    
     //Enter key will press send. (set self as delegate for textField and added UITextFieldDelegate)
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         
         handleSend()
-        inputTextField.text = ""
+        messageTextField.text = ""
         return true
         
     }
@@ -182,9 +182,11 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     
     override func viewDidAppear(_ animated: Bool) {
         
-        setupInputComponents()
+        //setupInputComponents()
         
-        //chosenUserNameLabel.text = chosenUser[1]
+        messageTextField.delegate = self
+        
+        navigationItem.title = chosenUser[1]
 
         fetchMessages()
         
@@ -196,6 +198,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: .UIKeyboardWillShow, object: nil)
     
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: .UIKeyboardWillHide, object: nil)
     }
     
     @IBOutlet weak var inputContainerViewBottomAnchor: NSLayoutConstraint!
@@ -204,15 +207,26 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UITableViewD
     func keyboardWillShow(notification: NSNotification) {
         if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
             let keyboardHeight = keyboardSize.height
-            print(keyboardHeight)
             
-            inputContainerViewBottomAnchor?.constant = -keyboardHeight
+            let keyboardDuration = (notification.userInfo?[UIKeyboardAnimationDurationUserInfoKey] as AnyObject).doubleValue
             
+            inputContainerViewBottomAnchor?.constant = -keyboardHeight - 40
+            
+            UIView.animate(withDuration: keyboardDuration!) {
+                self.view.layoutIfNeeded()
+            }
         }
         
-     
     }
-
+    
+    func keyboardWillHide(notification: NSNotification) {
+        let keyboardDuration = (notification.userInfo?[UIKeyboardAnimationDurationUserInfoKey] as AnyObject).doubleValue
+            
+        inputContainerViewBottomAnchor?.constant = 0
+        UIView.animate(withDuration: keyboardDuration!) {
+                self.view.layoutIfNeeded()
+        }
+    }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
